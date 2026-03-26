@@ -1,0 +1,22 @@
+input_file: ${INPUT_FILE}
+output_path: ${OUTPUT_PATH:-./output/}
+# OCR 配置
+ocr:
+  use_gpu: ${OCR_USE_GPU:-true}
+  gpu_mem: ${OCR_GPU_MEM:-8000}
+  use_angle_cls: ${OCR_USE_ANGLE_CLS:-true}
+  lang: ${OCR_LANG:-ch}
+  det_limit_side_len: ${OCR_DET_LIMIT_SIDE_LEN:-2500} # 增加检测范围，提高 OCR 准确率
+  # 切分配置
+  split_keywords:
+    - "附件1"
+    - "北京北辰会展投资有限公司"
+    - "设计变更审批表"
+
+regex_pattern:
+  # B24
+  - "^(JZ)-(\\d{2})-(\\d{2})-(C2)-(\\d{3})"
+  - "^(\\d{2})-(\\d{2})-(C2)-(\\d{3})"
+  - "^R20-03-Z-(\\d{2})"
+  - "^泳池变更-(\\d{2})"
+  - "^251614GC-([a-zA-Z0-9]{4})-(\\d{1})"

@@ -1,0 +1,5 @@
+- Python 项目先配置并使用固定解释器路径；环境不一致会出现“已安装但 import 失败”。
+- rapidocr-onnxruntime 1.2.x 传 det/rec/cls_* 参数时需同时提供 *_model_path（可空字符串），否则可能触发 KeyError: model_path。
+- 该项目 split_keywords 可能配置在 ocr.split_keywords，切分器需兼容顶层与嵌套两种写法。
+- Windows + onnxruntime-gpu + nvidia pip 运行时（cuda/cudnn）场景下，需在导入 RapidOCR 前注入 `site-packages/nvidia/*/bin` 到 DLL 搜索路径，否则会报 Error 126 并回退 CPU。
+- rapidocr-onnxruntime 1.2.x 的 rec/cls 参数映射存在缺陷，`rec_use_cuda/cls_use_cuda` 不会写回 `use_cuda`；需在业务代码里重建 rec/cls 的 OrtInferSession 才能全链路走 GPU。

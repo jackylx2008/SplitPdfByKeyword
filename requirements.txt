@@ -1,0 +1,7 @@
+paddlepaddle-gpu
+paddleocr
+pyyaml
+pymupdf
+numpy
+opencv-python
+rapidocr-onnxruntime
