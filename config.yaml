@@ -1,4 +1,5 @@
-input_file: ${INPUT_FILE}
+input_file: ${INPUT_FILE:-}
+input_dir: ${INPUT_DIR:-./input/}
 output_path: ${OUTPUT_PATH:-./output/}
 # OCR 配置
 ocr:

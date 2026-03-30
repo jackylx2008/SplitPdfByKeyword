@@ -1,5 +1,6 @@
 # Project runtime artifacts
 output/
+input/
 log/
 test_out.txt
 

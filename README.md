@@ -27,11 +27,12 @@
 
 - `split_pdf_keyword.py`：主流程入口（解释器兜底切换、启动清理、自检、切分）
 - `rename_pdfs_by_regex.py`：按首页 OCR 结果执行重命名
+- `process_usb_pdfs.py`：自动扫描所有已插入 U 盘，将 PDF 复制到本地 `input` 目录后串联执行切分 + 重命名
 - `ocr_engine.py`：OCR 处理与 CUDA 自检
 - `splitter.py`：按关键词规则切分 PDF
 - `logging_config.py`：统一日志配置
 - `config.yaml`：规则型配置，如关键字、正则、OCR 参数映射
-- `common.env`：环境隔离配置，如输入文件路径、输出目录、GPU 开关
+- `common.env`：环境隔离配置，如本地输入目录、GPU 开关
 - `.vscode/settings.json`：VS Code 解释器与 Run Code 配置
 
 ## 快速开始
@@ -49,8 +50,7 @@
 先编辑 [`common.env`](common.env)：
 
 ```env
-INPUT_FILE=D:/your/path/input.pdf
-OUTPUT_PATH=./output/
+INPUT_DIR=./input/
 OCR_USE_GPU=true
 OCR_GPU_MEM=8000
 OCR_USE_ANGLE_CLS=true
@@ -68,6 +68,20 @@ ocr:
 ```
 
 ### 3) 运行
+
+```powershell
+.\.conda\python.exe process_usb_pdfs.py
+```
+
+脚本默认会：
+
+- 自动识别当前已插入的所有可移动 U 盘
+- 递归扫描 U 盘中“当天修改”的 PDF，并先复制到本地 `input_dir`（默认 `./input/`）
+- 复制到本地时会在文件名后追加修改时间，用于区分同名 PDF
+- 所有切分结果直接输出到同一个 `output_path` 目录
+- 先执行切分，再对切分结果按首页 OCR 正则重命名
+
+如果你仍然需要手动处理单个文件，也可以直接运行：
 
 ```powershell
 .\.conda\python.exe split_pdf_keyword.py
@@ -89,6 +103,7 @@ ocr:
   - `ocr_engine.log`
   - `splitter.log`
 - 输出目录：`output_path`（默认 `./output/`）
+- 本地输入目录：`input_dir`（默认 `./input/`）
 
 ## VS Code 运行说明
 

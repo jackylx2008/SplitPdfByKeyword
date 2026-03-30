@@ -124,16 +124,15 @@ def ocr_first_page(pdf_path, ocr_processor, logger):
     return {"page": 0, "text": ""}
 
 
-def rename_pdfs_in_output(config, logger):
+def rename_pdf_files(pdf_files, config, logger):
     from ocr_engine import run_startup_self_check
 
-    output_dir = Path(config.get("output_path", "./output/"))
-    pdf_files = sorted(output_dir.glob("*.pdf"))
+    pdf_files = sorted(Path(pdf_file) for pdf_file in pdf_files)
     compiled_patterns = compile_regex_patterns(config)
     unmatched_files = []
 
     if not pdf_files:
-        logger.warning(f"输出目录中没有待重命名的 PDF: {output_dir}")
+        logger.warning("没有待重命名的 PDF 文件。")
         return
 
     if not compiled_patterns:
@@ -145,6 +144,7 @@ def rename_pdfs_in_output(config, logger):
     logger.info(f"开始按首页 OCR 结果重命名 PDF，共 {len(pdf_files)} 个文件。")
 
     for pdf_file in pdf_files:
+        output_dir = pdf_file.parent
         first_page_result = ocr_first_page(str(pdf_file), ocr_processor, logger)
         matched_text, matched_pattern = find_first_regex_match(
             first_page_result.get("text", ""), compiled_patterns
@@ -174,6 +174,17 @@ def rename_pdfs_in_output(config, logger):
         )
     else:
         logger.info("所有输出 PDF 均已在首页 OCR 阶段匹配到命名规则。")
+
+
+def rename_pdfs_in_output(config, logger):
+    output_dir = Path(config.get("output_path", "./output/"))
+    pdf_files = sorted(output_dir.glob("*.pdf"))
+
+    if not pdf_files:
+        logger.warning(f"输出目录中没有待重命名的 PDF: {output_dir}")
+        return
+
+    rename_pdf_files(pdf_files, config, logger)
 
 
 def main():
