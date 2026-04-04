@@ -16,13 +16,13 @@
 
 输入：
 - 配置输入：config.yaml、common.env、命令行参数 --config / --env
-- 数据输入：已插入 U 盘中的 PDF、本地 input_dir、output_path
+- 数据输入：已插入 U 盘中的 PDF、本地 input_path、output_path
 - 前置条件：需在 Windows 下运行；U 盘已插入；项目解释器和依赖环境可用
 
 输出：
 - 结果输出：复制后的本地输入 PDF、切分后的 PDF、重命名后的 PDF
 - 日志输出：./log/process_usb_pdfs.log
-- 副作用：清空本地 input_dir 和 output_path，对文件进行复制、生成和重命名
+- 副作用：清空本地 input_path 和 output_path，对文件进行复制、生成和重命名
 
 核心入口：
 - 主入口函数：main()

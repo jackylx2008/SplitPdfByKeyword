@@ -50,7 +50,7 @@
 先编辑 [`common.env`](common.env)：
 
 ```env
-INPUT_DIR=./input/
+INPUT_PATH=./input/
 OCR_USE_GPU=true
 OCR_GPU_MEM=8000
 OCR_USE_ANGLE_CLS=true
@@ -76,7 +76,7 @@ ocr:
 脚本默认会：
 
 - 自动识别当前已插入的所有可移动 U 盘
-- 递归扫描 U 盘中“当天修改”的 PDF，并先复制到本地 `input_dir`（默认 `./input/`）
+- 递归扫描 U 盘中“当天修改”的 PDF，并先复制到本地 `input_path`（默认 `./input/`）
 - 复制到本地时会在文件名后追加修改时间，用于区分同名 PDF
 - 所有切分结果直接输出到同一个 `output_path` 目录
 - 先执行切分，再对切分结果按首页 OCR 正则重命名
@@ -91,6 +91,8 @@ ocr:
 
 ```powershell
 .\.conda\python.exe rename_pdfs_by_regex.py
+.\.conda\python.exe rename_pdfs_by_regex.py --input-path .\input --output-path .\output
+.\.conda\python.exe rename_pdfs_by_regex.py --input-path .\input --in-place
 ```
 
 或直接在 VS Code 里点击 `Run Code`（已配置为 `.conda` 解释器）。
@@ -105,7 +107,7 @@ ocr:
   - `ocr_engine.log`
   - `splitter.log`
 - 输出目录：`output_path`（默认 `./output/`）
-- 本地输入目录：`input_dir`（默认 `./input/`）
+- 本地输入目录：`input_path`（默认 `./input/`）
 
 ## VS Code 运行说明
 

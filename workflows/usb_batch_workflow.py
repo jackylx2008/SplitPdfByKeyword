@@ -3,7 +3,7 @@
 - 编排 U 盘 PDF 导入、本地切分和切分结果重命名的一条龙流程。
 
 主要职责：
-- 扫描可移动 U 盘并复制目标 PDF 到 input_dir。
+- 扫描可移动 U 盘并复制目标 PDF 到 input_path。
 - 对每个复制到本地的 PDF 执行切分。
 - 对本轮新生成的切分结果执行重命名。
 
@@ -15,14 +15,14 @@
 - 作为依赖用途：提供完整的 USB 批处理工作流。
 
 输入：
-- 配置输入：input_dir、output_path、OCR 配置、切分关键词、重命名正则
+- 配置输入：input_path、output_path、OCR 配置、切分关键词、重命名正则
 - 数据输入：已插入 U 盘中的 PDF
 - 前置条件：需在 Windows 环境运行并检测到可移动磁盘
 
 输出：
 - 结果输出：本地输入 PDF、切分后的 PDF、重命名后的 PDF
 - 日志输出：调用方 logger
-- 副作用：清空 input_dir 和 output_path，并生成/重命名文件
+- 副作用：清空 input_path 和 output_path，并生成/重命名文件
 
 核心入口：
 - 关键函数：run_usb_batch()、process_single_pdf()
@@ -44,12 +44,12 @@ from services.usb_scan_service import (
 from workflows.split_workflow import process_pdf_with_config
 
 
-def build_output_path(output_root, input_dir, pdf_path):
+def build_output_path(output_root, input_path, pdf_path):
     return Path(output_root)
 
 
-def process_single_pdf(pdf_path, base_config, input_dir, output_root, logger):
-    output_path = build_output_path(output_root, input_dir, pdf_path)
+def process_single_pdf(pdf_path, base_config, input_path, output_root, logger):
+    output_path = build_output_path(output_root, input_path, pdf_path)
     existing_pdfs = (
         {pdf.resolve() for pdf in output_path.glob("*.pdf")}
         if output_path.exists()
@@ -82,7 +82,7 @@ def process_single_pdf(pdf_path, base_config, input_dir, output_root, logger):
 
 
 def run_usb_batch(base_config, logger):
-    input_dir = Path(base_config.get("input_dir", "./input/"))
+    input_path = Path(base_config.get("input_path", "./input/"))
     output_root = Path(base_config.get("output_path", "./output/"))
     drive_roots = list_removable_drive_roots()
 
@@ -92,9 +92,9 @@ def run_usb_batch(base_config, logger):
 
     logger.info("检测到以下U盘: " + ", ".join(str(path) for path in drive_roots))
 
-    copied_pdfs = copy_pdfs_from_usb_drives(drive_roots, input_dir, logger)
+    copied_pdfs = copy_pdfs_from_usb_drives(drive_roots, input_path, logger)
     if not copied_pdfs:
-        logger.warning(f"未从U盘复制到任何 PDF 文件，本地输入目录: {input_dir}")
+        logger.warning(f"未从U盘复制到任何 PDF 文件，本地输入目录: {input_path}")
         return False
 
     clear_output_directory(output_root, logger)
@@ -107,7 +107,7 @@ def run_usb_batch(base_config, logger):
     for pdf_path in copied_pdfs:
         try:
             if process_single_pdf(
-                pdf_path, base_config, input_dir, output_root, logger
+                pdf_path, base_config, input_path, output_root, logger
             ):
                 success_count += 1
             else:

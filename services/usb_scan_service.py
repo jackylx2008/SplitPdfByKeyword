@@ -5,7 +5,7 @@
 主要职责：
 - 枚举 Windows 可移动磁盘。
 - 按日期规则筛选 PDF 文件。
-- 将目标 PDF 复制到本地输入目录并处理重名。
+- 将目标 PDF 复制到本地输入路径并处理重名。
 
 运行方式：
 - 分类：被依赖脚本
@@ -16,13 +16,13 @@
 
 输入：
 - 配置输入：目标日期匹配模式、是否递归扫描
-- 数据输入：U 盘根目录、本地 input_dir
+- 数据输入：U 盘根目录、本地 input_path
 - 前置条件：运行环境为 Windows 时才能扫描可移动磁盘
 
 输出：
 - 结果输出：复制到本地的 PDF 路径列表
 - 日志输出：调用方 logger
-- 副作用：清空 input_dir，并复制文件到本地
+- 副作用：清空 input_path，并复制文件到本地
 
 核心入口：
 - 关键函数：list_removable_drive_roots()、copy_pdfs_from_usb_drives()
@@ -95,22 +95,22 @@ def file_matches_target_date(pdf_path, target_date):
     return False
 
 
-def build_local_input_path(input_dir, source_pdf):
+def build_local_input_path(input_path, source_pdf):
     modified_at = datetime.fromtimestamp(source_pdf.stat().st_mtime)
     timestamp_text = modified_at.strftime("%Y%m%d_%H%M%S")
     base_name = f"{source_pdf.stem}_{timestamp_text}"
-    target_pdf = Path(input_dir) / f"{base_name}.pdf"
+    target_pdf = Path(input_path) / f"{base_name}.pdf"
     counter = 2
 
     while target_pdf.exists():
-        target_pdf = Path(input_dir) / f"{base_name}_{counter}.pdf"
+        target_pdf = Path(input_path) / f"{base_name}_{counter}.pdf"
         counter += 1
 
     return target_pdf
 
 
-def copy_pdfs_from_usb_drives(drive_roots, input_dir, logger):
-    clear_directory(input_dir, logger, label="输入目录")
+def copy_pdfs_from_usb_drives(drive_roots, input_path, logger):
+    clear_directory(input_path, logger, label="输入目录")
     target_date = date.today()
 
     copied_files = []
@@ -134,7 +134,7 @@ def copy_pdfs_from_usb_drives(drive_roots, input_dir, logger):
         )
         for source_pdf in pdf_files:
             try:
-                target_pdf = build_local_input_path(input_dir, source_pdf)
+                target_pdf = build_local_input_path(input_path, source_pdf)
                 target_pdf.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(source_pdf, target_pdf)
                 copied_files.append(target_pdf)

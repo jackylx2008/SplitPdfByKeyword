@@ -1,11 +1,11 @@
 """
 文件说明：
-- 提供 PDF 首页 OCR 正则匹配和文件重命名能力。
+- 提供 PDF 首页 OCR 正则匹配、复制输出和文件重命名能力。
 
 主要职责：
 - 识别 PDF 首页文本并提取候选命名片段。
 - 基于 regex_pattern 规则匹配目标名称。
-- 生成安全文件名并完成冲突规避后的重命名。
+- 生成安全文件名并完成冲突规避后的复制/重命名。
 
 运行方式：
 - 分类：被依赖脚本
@@ -22,7 +22,7 @@
 输出：
 - 结果输出：重命名后的 PDF 文件
 - 日志输出：调用方 logger
-- 副作用：直接修改文件名
+- 副作用：可按模式复制文件到输出目录，或直接修改原文件名
 
 核心入口：
 - 关键函数：rename_pdf_files()、find_first_regex_match()
@@ -36,6 +36,7 @@
 """
 
 import re
+import shutil
 from pathlib import Path
 
 from services.ocr_service import run_startup_self_check
@@ -75,7 +76,7 @@ def sanitize_filename(name):
     sanitized = sanitized or "unnamed"
     if sanitized.upper() in WINDOWS_RESERVED_NAMES:
         sanitized = f"{sanitized}_file"
-    return sanitized
+    return sanitized.upper()
 
 
 def compile_regex_patterns(config):
@@ -158,7 +159,7 @@ def ocr_first_page(pdf_path, ocr_processor, logger):
     return {"page": 0, "text": ""}
 
 
-def rename_pdf_files(pdf_files, config, logger):
+def rename_pdf_files(pdf_files, config, logger, output_dir=None, in_place=True):
     pdf_files = sorted(Path(pdf_file) for pdf_file in pdf_files)
     compiled_patterns = compile_regex_patterns(config)
     unmatched_files = []
@@ -173,10 +174,18 @@ def rename_pdf_files(pdf_files, config, logger):
 
     logger.info("执行启动前自检并初始化 OCR...")
     ocr_processor = run_startup_self_check(config, logger)
-    logger.info(f"开始按首页 OCR 结果重命名 PDF，共 {len(pdf_files)} 个文件。")
+    mode_text = "原地重命名" if in_place else "复制到输出目录并重命名"
+    logger.info(
+        f"开始按首页 OCR 结果处理 PDF，共 {len(pdf_files)} 个文件，模式: {mode_text}。"
+    )
+
+    resolved_output_dir = None
+    if not in_place:
+        resolved_output_dir = Path(output_dir or config.get("output_path", "./output/"))
+        resolved_output_dir.mkdir(parents=True, exist_ok=True)
 
     for pdf_file in pdf_files:
-        output_dir = pdf_file.parent
+        target_dir = pdf_file.parent if in_place else resolved_output_dir
         first_page_result = ocr_first_page(str(pdf_file), ocr_processor, logger)
         matched_text, matched_pattern = find_first_regex_match(
             first_page_result.get("text", ""), compiled_patterns
@@ -187,17 +196,24 @@ def rename_pdf_files(pdf_files, config, logger):
             continue
 
         safe_name = sanitize_filename(matched_text)
-        desired_path = output_dir / f"{safe_name}.pdf"
-        if pdf_file.resolve() == desired_path.resolve():
+        desired_path = target_dir / f"{safe_name}.pdf"
+        if in_place and pdf_file.resolve() == desired_path.resolve():
             logger.info(f"文件名已符合匹配结果，无需重命名: {pdf_file.name}")
             continue
 
-        target_path = ensure_unique_pdf_path(output_dir, safe_name)
-        pdf_file.rename(target_path)
-        logger.info(
-            f"首页匹配成功，已重命名 PDF: {pdf_file.name} -> {target_path.name}, "
-            f"matched_text={matched_text}, pattern={matched_pattern}"
-        )
+        target_path = ensure_unique_pdf_path(target_dir, safe_name)
+        if in_place:
+            pdf_file.rename(target_path)
+            logger.info(
+                f"首页匹配成功，已原地重命名 PDF: {pdf_file.name} -> {target_path.name}, "
+                f"matched_text={matched_text}, pattern={matched_pattern}"
+            )
+        else:
+            shutil.copy2(pdf_file, target_path)
+            logger.info(
+                f"首页匹配成功，已复制并重命名 PDF: {pdf_file.name} -> {target_path.name}, "
+                f"matched_text={matched_text}, pattern={matched_pattern}"
+            )
 
     if unmatched_files:
         logger.warning(
