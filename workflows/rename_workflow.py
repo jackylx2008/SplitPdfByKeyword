@@ -43,7 +43,10 @@ def _collect_pdf_files(input_path):
 
 
 def rename_pdfs(config, logger, input_path=None, output_path=None, in_place=False):
-    source_dir = Path(input_path or config.get("input_path", "./input/")).resolve()
+    default_source = config.get(
+        "rename_input_path", config.get("output_path", "./output/")
+    )
+    source_dir = Path(input_path or default_source).resolve()
     target_dir = Path(output_path or config.get("output_path", "./output/")).resolve()
 
     if not source_dir.exists():

@@ -1,6 +1,9 @@
 input_file: ${INPUT_FILE:-}
 input_path: ${INPUT_PATH:-./input/}
 output_path: ${OUTPUT_PATH:-./output/}
+split_input_file: ${SPLIT_INPUT_FILE:-}
+split_output_path: ${SPLIT_OUTPUT_PATH:-./output/}
+rename_input_path: ${RENAME_INPUT_PATH:-./output/}
 # OCR 配置
 ocr:
   use_gpu: ${OCR_USE_GPU:-true}
@@ -13,9 +16,15 @@ ocr:
     - "附件1"
     - "北京北辰会展投资有限公司"
     - "设计变更审批表"
+  not_split_keywords:
+    - "旧编号"
 
 regex_pattern:
-  # B24
+  # 主体
+  - "^190643GC-([a-zA-Z0-9]{4})-(\\d{1})"
+  - "^(\\d{2})-(\\d{2})-(C2)-(\\d{3})-(C|E)"
+  
+  #  B24
   - "^(JZ)-(\\d{2})-(\\d{2})-(C2)-(\\d{3})"
   - "^(\\d{2})-(\\d{2})-(C2)-(\\d{3})"
   - "^R20-03-Z-(\\d{2})"

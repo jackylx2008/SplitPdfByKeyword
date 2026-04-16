@@ -87,6 +87,11 @@ def main():
         logger.error(str(exc))
         return
 
+    if args.input_file is None:
+        config["input_file"] = config.get("split_input_file", "")
+    if args.output_path is None:
+        config["output_path"] = config.get("split_output_path", "./output/")
+
     process_pdf_with_config(config, logger=logger, clear_output=True)
 
 

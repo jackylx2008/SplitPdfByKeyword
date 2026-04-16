@@ -51,6 +51,9 @@ class PDFSplitter:
         self.keywords = config.get("split_keywords") or config.get("ocr", {}).get(
             "split_keywords", []
         )
+        self.not_split_keywords = config.get("not_split_keywords") or config.get(
+            "ocr", {}
+        ).get("not_split_keywords", [])
         self.output_path = config.get("output_path", "./output/")
 
         if not os.path.exists(self.output_path):
@@ -71,16 +74,19 @@ class PDFSplitter:
 
         # 记录切分点的起始页码
         split_points = []
+        valid_keywords = [kw for kw in self.keywords if str(kw).strip()]
+        valid_not_split_keywords = [
+            kw for kw in self.not_split_keywords if str(kw).strip()
+        ]
         for res in ocr_results:
             page_index = res["page"]
             text = res["text"]
 
             normalized_text = "".join(str(text).split())
 
-            if not self.keywords:
+            if not valid_keywords:
                 continue
 
-            valid_keywords = [kw for kw in self.keywords if str(kw).strip()]
             matched_keywords = []
             for kw in valid_keywords:
                 normalized_kw = "".join(str(kw).split())
@@ -88,6 +94,19 @@ class PDFSplitter:
                     matched_keywords.append(kw)
 
             if len(valid_keywords) > 0 and len(matched_keywords) == len(valid_keywords):
+                matched_not_split_keywords = []
+                for kw in valid_not_split_keywords:
+                    normalized_kw = "".join(str(kw).split())
+                    if normalized_kw and normalized_kw in normalized_text:
+                        matched_not_split_keywords.append(kw)
+
+                if matched_not_split_keywords:
+                    logger.info(
+                        f"第 {page_index + 1} 页命中排除切分关键字，不作为切分点: "
+                        f"{matched_not_split_keywords}"
+                    )
+                    continue
+
                 logger.info(
                     f"第 {page_index + 1} 页同时命中全部切分关键字: {matched_keywords}"
                 )

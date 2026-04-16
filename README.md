@@ -20,6 +20,7 @@
 - 按 `split_keywords` 执行切分：
   - **同一页需要同时命中全部关键词** 才作为起始页。
   - 匹配时会忽略空白（空格、换行）差异，提高 OCR 噪声下命中率。
+- 若同一页命中 `not_split_keywords` 中任一关键词，即使同时命中全部 `split_keywords`，也**不会**作为切分起始页。
 - 每页识别后，日志会打印该页识别文本前 3 行。
 - 每次启动会先清空 `output_path`（默认 `./output/`）下已有文件。
 
@@ -32,7 +33,7 @@
 - `services/`：能力实现层，存放 OCR、切分、重命名、U 盘扫描、文件操作
 - `workflows/`：流程编排层，串联切分、重命名、U 盘批处理流程
 - `config.yaml`：规则型配置，如关键字、正则、OCR 参数映射
-- `common.env`：环境隔离配置，如本地输入目录、GPU 开关
+- `common.env`：环境隔离配置，如切分输入文件、切分输出目录、重命名输入目录、GPU 开关
 - `.vscode/settings.json`：VS Code 解释器与 Run Code 配置
 
 ## 快速开始
@@ -51,6 +52,10 @@
 
 ```env
 INPUT_PATH=./input/
+OUTPUT_PATH=./output/
+SPLIT_INPUT_FILE=./input/example.pdf
+SPLIT_OUTPUT_PATH=./output/
+RENAME_INPUT_PATH=./output/
 OCR_USE_GPU=true
 OCR_GPU_MEM=8000
 OCR_USE_ANGLE_CLS=true
@@ -61,11 +66,22 @@ OCR_DET_LIMIT_SIDE_LEN=2500
 再编辑 [`config.yaml`](config.yaml) 中的规则部分：
 
 ```yaml
+split_input_file: ${SPLIT_INPUT_FILE:-}
+split_output_path: ${SPLIT_OUTPUT_PATH:-./output/}
+rename_input_path: ${RENAME_INPUT_PATH:-./output/}
+
 ocr:
   split_keywords:
     - "关键词1"
     - "关键词2"
+  not_split_keywords:
+    - "排除切分页关键词"
 ```
+
+脚本默认配置用途：
+- `split_pdf_keyword.py`：使用 `split_input_file` 和 `split_output_path`
+- `rename_pdfs_by_regex.py`：使用 `rename_input_path`
+- `process_usb_pdfs.py`：仍使用 `input_path` 和 `output_path`
 
 ### 3) 运行
 
@@ -91,9 +107,10 @@ ocr:
 
 ```powershell
 .\.conda\python.exe rename_pdfs_by_regex.py
-.\.conda\python.exe rename_pdfs_by_regex.py --input-path .\input --output-path .\output
-.\.conda\python.exe rename_pdfs_by_regex.py --input-path .\input --in-place
+.\.conda\python.exe rename_pdfs_by_regex.py --input-path .\output
 ```
+
+其中默认命令会直接处理 `rename_input_path`（建议设为 `./output/`）中的 PDF，并原地重命名。
 
 或直接在 VS Code 里点击 `Run Code`（已配置为 `.conda` 解释器）。
 
