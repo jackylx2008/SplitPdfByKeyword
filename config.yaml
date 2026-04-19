@@ -7,6 +7,8 @@ rename_input_path: ${RENAME_INPUT_PATH:-./output/}
 approval_form_input_path: ${APPROVAL_FORM_INPUT_PATH:-./output/}
 approval_form_prefix: ${APPROVAL_FORM_PREFIX:-审批单_}
 approval_form_excel_path: ${APPROVAL_FORM_EXCEL_PATH:-}
+png_ocr_input_path: ${PNG_OCR_INPUT_PATH:-./input/}
+png_ocr_output_txt_path: ${PNG_OCR_OUTPUT_TXT_PATH:-./output/png_ocr_regex_matches.txt}
 # OCR 配置
 ocr:
   use_gpu: ${OCR_USE_GPU:-true}

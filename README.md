@@ -114,6 +114,61 @@ ocr:
 
 或直接在 VS Code 里点击 `Run Code`（已配置为 `.conda` 解释器）。
 
+## PNG OCR 工作流
+
+项目已增加一个面向 PNG 图片的 OCR 统计入口：
+
+```powershell
+.\.conda\python.exe png_regex_ocr.py
+```
+
+该流程会：
+
+- 读取 `png_ocr_input_path` 下的 `*.png`
+- 复用现有 OCR 引擎进行识别
+- 按 `regex_pattern` 统计命中字符串
+- 将结果写入 `png_ocr_output_txt_path`
+- 每次启动前覆盖 `./log/png_regex_ocr.log`
+- 每次启动前清空旧的统计 TXT
+
+相关配置：
+
+- `config.yaml`
+  - `png_ocr_input_path`
+  - `png_ocr_output_txt_path`
+- `common.env`
+  - `PNG_OCR_INPUT_PATH`
+  - `PNG_OCR_OUTPUT_TXT_PATH`
+
+### 当前已知问题
+
+PNG OCR 工作流目前已经能处理一部分截图类图片，但在“微信截图 / 桌面附件列表截图”场景下仍有明显局限：
+
+- 某些图片虽然可以正常读取，但 OCR 结果长度为 `0`，说明图片已解码成功，但模型没有检测到可用文字。
+- 小字体、抗锯齿 UI 文本、图标干扰、浅色背景、文本截断，会显著降低默认 OCR 模型的识别效果。
+- 当前 `regex_pattern` 是强结构匹配规则，对 `-`、`JZ`、`C2` 等字符识别错误非常敏感，只要 OCR 有轻微偏差就会完全匹配失败。
+- OneDrive/桌面路径下的中文文件名问题已经通过 `numpy.fromfile + cv2.imdecode` 规避，但这只能解决“读图失败”，不能解决“识别为空”。
+- 当前流程已经加入“原图 OCR + 增强 OCR”双通道策略，但依然是整图识别，对附件列表类截图仍可能不够稳定。
+
+### 当前调试信息
+
+`png_regex_ocr.log` 现在会记录以下调试信息，用于排查未命中原因：
+
+- 图片路径、文件大小、读取字节数
+- OCR 原始字符长度、去空白长度、有效行数
+- 原图 OCR 与增强 OCR 的结果长度对比，以及最终选用哪一份结果
+- 识别文本前 3 行
+- 未命中时的候选文本长度
+- 未命中时的完整 OCR 文本
+
+### 下一步建议
+
+如果后续要继续提升 PNG/截图识别准确率，优先建议：
+
+- 增加“屏幕截图专用”局部裁剪识别，只针对文件名区域做 OCR
+- 再根据截图场景单独设计更宽松的正则匹配策略
+- 必要时引入更适合小号 UI 文本的 OCR 模型
+
 ## 日志与输出
 
 - 日志目录：`./log/`
