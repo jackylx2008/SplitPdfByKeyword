@@ -5,3 +5,4 @@ pymupdf
 numpy
 opencv-python
 rapidocr-onnxruntime
+openpyxl
