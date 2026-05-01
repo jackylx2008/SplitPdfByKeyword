@@ -1,4 +1,4 @@
-# SplitPdfByKeyWord
+# LocalAiOcrFile
 
 基于 OCR 的 PDF 自动切分工具：先逐页识别文本，再按关键字规则切分并导出子 PDF。
 

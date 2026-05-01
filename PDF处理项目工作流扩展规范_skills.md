@@ -1,4 +1,4 @@
-# SplitPdfByKeyWord Workflow Skill
+# LocalAiOcrFile Workflow Skill
 
 ## Purpose
 

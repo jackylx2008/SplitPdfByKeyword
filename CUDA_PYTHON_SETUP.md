@@ -1,4 +1,4 @@
-# SplitPdfByKeyWord：CUDA + Python 环境配置指南（VS Code）
+# LocalAiOcrFile：CUDA + Python 环境配置指南（VS Code）
 
 ## 目标
 
