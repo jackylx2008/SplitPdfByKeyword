@@ -4,7 +4,7 @@
 
 ## 文档导航
 
-- CUDA/Python 环境配置手册：[`CUDA_PYTHON_SETUP.md`](CUDA_PYTHON_SETUP.md)
+- 本地 AI 运行环境配置手册：[`LOCAL_AI_RUNTIME_SETUP.md`](LOCAL_AI_RUNTIME_SETUP.md)
 - Copilot 仓库指令：[`.github/copilot-instructions.md`](.github/copilot-instructions.md)
 - 运行配置文件：[`config.yaml`](config.yaml)
 - 本地环境变量：[`common.env`](common.env)
@@ -26,15 +26,34 @@
 
 ## 目录说明
 
-- `split_pdf_keyword.py`：单文件切分入口脚本
-- `rename_pdfs_by_regex.py`：输出目录重命名入口脚本
-- `process_usb_pdfs.py`：U 盘一条龙处理入口脚本
+- `*.py`：项目根目录下的独立入口脚本，详见“入口脚本说明”
 - `core/`：基础设施层，存放运行时、配置、日志
 - `services/`：能力实现层，存放 OCR、切分、重命名、U 盘扫描、文件操作
 - `workflows/`：流程编排层，串联切分、重命名、U 盘批处理流程
 - `config.yaml`：规则型配置，如关键字、正则、OCR 参数映射
 - `common.env`：环境隔离配置，如切分输入文件、切分输出目录、重命名输入目录、GPU 开关
 - `.vscode/settings.json`：VS Code 解释器与 Run Code 配置
+
+## 入口脚本说明
+
+项目根目录下的 `.py` 文件均为可独立运行的入口脚本，公共处理逻辑已下沉到 `core/`、`services/`、`workflows/`，复用能力时优先导入这些模块，不建议导入入口脚本。
+
+| 入口脚本 | 用途 | 常用命令 |
+| --- | --- | --- |
+| `process_usb_pdfs.py` | 自动扫描已插入 U 盘中的当天 PDF，复制到本地后执行切分和重命名的一条龙批处理。 | `.\.conda\python.exe process_usb_pdfs.py` |
+| `split_pdf_keyword.py` | 对单个 PDF 执行 OCR 识别，并按关键词规则切分。 | `.\.conda\python.exe split_pdf_keyword.py --input-file .\input\example.pdf` |
+| `rename_pdfs_by_regex.py` | 扫描指定目录中的 PDF，按首页 OCR 文本匹配 `regex_pattern` 后原地重命名。 | `.\.conda\python.exe rename_pdfs_by_regex.py --input-path .\output` |
+| `png_regex_ocr.py` | 批量识别图片目录中的 PNG/JPG/JPEG，并将 `regex_pattern` 命中统计写入 TXT。 | `.\.conda\python.exe png_regex_ocr.py --input-path .\input --output-txt .\output\png_regex_result.txt` |
+| `rename_images_by_ai.py` | 对 PNG/JPG/JPEG/HEIC/HEIF 图片执行本地 AI OCR，并按 `regex_pattern` 匹配结果原地重命名。 | `.\.conda\python.exe rename_images_by_ai.py --input-path .\input --dry-run` |
+| `approval_form_pdfs.py` | 批量处理目录中的 PDF，仅保留第一页、增加审批单前缀，并导出统计 Excel。 | `.\.conda\python.exe approval_form_pdfs.py --input-path .\input` |
+
+常用参数约定：
+
+- `--config`：规则配置文件路径，默认 `config.yaml`。
+- `--env`：环境变量文件路径，默认自动读取 `common.env`。
+- `--input-path` / `--input-file`：覆盖配置中的输入目录或输入文件。
+- `--output-path` / `--output-txt` / `--excel-path`：覆盖配置中的输出位置。
+- `--filename-prefix` / `--prefix`：为重命名或审批单输出增加文件名前缀。
 
 ## 快速开始
 
@@ -204,6 +223,9 @@ PNG OCR 工作流目前已经能处理一部分截图类图片，但在“微信
   - `split_pdf_keyword.log`
   - `rename_pdfs_by_regex.log`
   - `process_usb_pdfs.log`
+  - `png_regex_ocr.log`
+  - `rename_images_by_ai.log`
+  - `approval_form_pdfs.log`
   - `ocr_engine.log`
   - `splitter.log`
 - 输出目录：`output_path`（默认 `./output/`）
@@ -218,16 +240,16 @@ PNG OCR 工作流目前已经能处理一部分截图类图片，但在“微信
 
 ## 给 Copilot 的建议用法
 
-当你在 VS Code 中让 Copilot 帮忙“配置环境 / CUDA / 运行项目”时，它会先读取 [`.github/copilot-instructions.md`](.github/copilot-instructions.md)，再按 [`CUDA_PYTHON_SETUP.md`](CUDA_PYTHON_SETUP.md) 执行。
+当你在 VS Code 中让 Copilot 帮忙“配置本地 AI / CUDA / 运行项目”时，它会先读取 [`.github/copilot-instructions.md`](.github/copilot-instructions.md)，再按 [`LOCAL_AI_RUNTIME_SETUP.md`](LOCAL_AI_RUNTIME_SETUP.md) 执行。
 
 你也可以直接提示：
 
 ```text
-请先读取 CUDA_PYTHON_SETUP.md，然后按文档步骤在当前工作区完成 CUDA + Python 环境配置与验证。
+请先读取 LOCAL_AI_RUNTIME_SETUP.md，然后按文档步骤在当前工作区完成本地 AI 运行环境配置与验证。
 ```
 
 ## 常见问题
 
 - `ImportError: cannot import name 'GraphOptimizationLevel'`：通常是误用 Anaconda `base`，请改用 `./.conda/python.exe`。
 - PowerShell 报 `Unexpected token '-u'`：Code Runner 命令需使用 `&` 调用符，见 `.vscode/settings.json`。
-- `CUDAExecutionProvider` 不可用：按 [`CUDA_PYTHON_SETUP.md`](CUDA_PYTHON_SETUP.md) 重新安装 `onnxruntime-gpu[cuda,cudnn]` 并执行启动前自检。
+- `CUDAExecutionProvider` 不可用：按 [`LOCAL_AI_RUNTIME_SETUP.md`](LOCAL_AI_RUNTIME_SETUP.md) 检查 CUDA、Python 环境和本地 AI 运行时配置，并执行启动前自检。
